@@ -26,6 +26,8 @@ pub fn get_subscriber(
         name,
         std::io::stdout
     );
+    // The `with` method is provided by `SubscriberExt`, an extension
+    // trait for `Subscriber` exposed by `tracing_subscriber`
     Registry::default()
         .with(env_filter)
         .with(JsonStorageLayer)
@@ -34,6 +36,8 @@ pub fn get_subscriber(
 }
 
 pub fn init_subscriber(subscriber: impl Subscriber + Send + Sync) {
+    // Redirect all `log`'s events to our subscriber
     LogTracer::init().expect("Failed to set logger");
+    // specifies what subscriber should be used to process spans.
     set_global_default(subscriber).expect("Failed to set subscriber");
 }
