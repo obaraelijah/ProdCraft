@@ -5,7 +5,6 @@ use prod_craft::startup::run;
 use prod_craft::telemetry::{get_subscriber, init_subscriber};
 use uuid::Uuid;
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -122,8 +121,8 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
 
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-    //connect db
-    let mut connection = PgConnection::connect(&config.connection_string_without_db().expose_secret())
+    //create db
+    let mut connection = PgConnection::connect_with(&config.without_db())
         .await
         .expect("Failed to connect to Postgres");
     connection
@@ -132,7 +131,7 @@ pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create a database.");
 
     // Migrate database
-    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
+    let connection_pool = PgPool::connect_with(config.with_db())
         .await
         .expect("Failed to connect to Postgres.");
     sqlx::migrate!("./migrations")
