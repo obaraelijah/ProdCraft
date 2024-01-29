@@ -1,13 +1,8 @@
-FROM rust:1.59.0
-
+FROM rust:1.70
 WORKDIR /app
-
 RUN apt update && apt install lld clang -y
-
 COPY . .
-
-ENV key=value
-
 ENV SQLX_OFFLINE true
-
-ENTRYPOINT ["./target/release/prod_craft"]
+RUN cargo build --release
+ENV APP_ENVIRONMENT production
+ENTRYPOINT ["./target/release/zero2prod"]
