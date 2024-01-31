@@ -14,7 +14,7 @@ name = "prod_craft"
 serde = { version = "1", features = ["derive"] }
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-reqwest = "0.11"
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
 sqlx = { version = "0.7", features = [ "runtime-async-std", "macros","chrono","migrate","uuid","tls-rustls", "postgres"] }
 config = "0.13"
 uuid = { version = "1", features = ["v4"] }
