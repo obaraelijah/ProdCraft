@@ -65,7 +65,6 @@ struct SendEmailRequest<'a> {
 }
 #[cfg(test)]
 mod tests {
-    use actix_web::rt::time;
     use wiremock::Request;
     use crate::domain::SubscriberEmail;
     use crate::email_client::EmailClient;
