@@ -1,9 +1,6 @@
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use std::net::TcpListener;
 use uuid::Uuid;
 use prod_craft::configuration::{get_configuration, DatabaseSettings};
-use prod_craft::email_client::EmailClient;
-use prod_craft::startup::run;
 use prod_craft::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
 use prod_craft::startup::get_connection_pool;
@@ -25,6 +22,18 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
+}
+
+impl TestApp {
+    pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(&format!("{}/subscriptions", &self.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
 }
 
 pub async fn spawn_app() -> TestApp {
