@@ -11,9 +11,9 @@ pub struct EmailClient {
 }
 
 impl EmailClient {
-    pub fn new(base_url: String, sender: SubscriberEmail, authorization_token: Secret<String>) -> Self {
+    pub fn new(base_url: String, sender: SubscriberEmail, authorization_token: Secret<String>, timeout: std::time::Duration,) -> Self {
         let http_client = Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
+            .timeout(timeout)
             .build()
             .unwrap();
         Self {
@@ -65,6 +65,7 @@ struct SendEmailRequest<'a> {
 }
 #[cfg(test)]
 mod tests {
+    use actix_web::rt::time;
     use wiremock::Request;
     use crate::domain::SubscriberEmail;
     use crate::email_client::EmailClient;
@@ -112,7 +113,12 @@ mod tests {
 
     /// Get a test instance of `EmailClient`.
     fn email_client(base_url: String) -> EmailClient {
-        EmailClient::new(base_url, email(), Secret::new(Faker.fake()))
+        EmailClient::new(
+            base_url, 
+            email(), 
+            Secret::new(Faker.fake()),
+            std::time::Duration::from_millis(200),
+        )
     }
 
     #[tokio::test]
