@@ -25,13 +25,8 @@ impl Application {
             .email_client
             .sender()
             .expect("Invalid sender email address.");
-        
-        let email_client = EmailClient::new(
-            configuration.email_client.base_url,
-            sender_email,
-            configuration.email_client.authorization_token,
-        );
-    
+
+        let email_client = configuration.email_client.client();
         let address = format!(
             "{}:{}",
             configuration.application.host, configuration.application.port

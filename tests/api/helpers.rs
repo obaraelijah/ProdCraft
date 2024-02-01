@@ -6,7 +6,7 @@ use prod_craft::email_client::EmailClient;
 use prod_craft::startup::run;
 use prod_craft::telemetry::{get_subscriber, init_subscriber};
 use once_cell::sync::Lazy;
-use prod_craft::startup::{build, get_connection_pool};
+use prod_craft::startup::get_connection_pool;
 use prod_craft::startup::Application;
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
@@ -41,10 +41,6 @@ pub async fn spawn_app() -> TestApp {
 
     configure_database(&configuration.database).await;
 
-    
-    let server = build(configuration.clone())
-        .await
-        .expect("Failed to build application.");
     let application = Application::build(configuration.clone())
         .await
         .expect("Failed to build application.");
