@@ -23,7 +23,6 @@ impl TryFrom<FormData> for NewSubscriber {
     }
 }
 
-
 // creates a span 
 #[tracing::instrument(
     name = "Adding a new subscriber.",
@@ -118,7 +117,7 @@ pub async fn send_confirmation_email(
     name = "Saving new subscriber details in the database",
     skip(new_subscriber, pool)
 )]
-pub async fn insert_subscriber(pool: &PgPool, new_subscriber: &NewSubscriber) -> Result<(), sqlx::Error> {
+pub async fn insert_subscriber(pool: &PgPool, new_subscriber: &NewSubscriber) -> Result<Uuid, sqlx::Error> {
     let subscriber_id = Uuid::new_v4();
     sqlx::query!(
         r#"INSERT INTO subscriptions (id, email, name, subscribed_at, status)
