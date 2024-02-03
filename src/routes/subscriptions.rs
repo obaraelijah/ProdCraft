@@ -1,7 +1,6 @@
 use actix_web::{HttpResponse, web };
 use sqlx::PgPool;
 use uuid::Uuid;
-use chrono::Utc;
 use crate::email_client::EmailClient;
 use crate::startup::ApplicationBaseUrl;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -77,7 +76,6 @@ pub async fn subscribe(
     HttpResponse::Ok().finish()
 }
 
-
 fn generate_subscription_token() -> String {
     let mut rng = thread_rng();
     std::iter::repeat_with(|| rng.sample(Alphanumeric))
@@ -124,7 +122,6 @@ pub async fn send_confirmation_email(
     name = "Saving new subscriber details in the database",
     skip(new_subscriber, transaction)
 )]
-
 pub async fn insert_subscriber(
     transaction: &mut Transaction<'_, Postgres>,
     new_subscriber: &NewSubscriber
