@@ -6,7 +6,6 @@ use crate::email_client::EmailClient;
 use crate::startup::ApplicationBaseUrl;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use sqlx::{Postgres, Transaction };
-use actix_web::ResponseError;
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, };
 #[derive(serde::Deserialize)]
@@ -15,18 +14,6 @@ pub struct FormData {
     name: String,
 }
 
-#[derive(Debug)]
-pub struct StoreTokenError(sqlx::Error);
-
-impl std::fmt::Display for StoreTokenError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "A database error was encountered while \
-            trying to store a subscription token."
-        )
-    }
-}
 
 impl TryFrom<FormData> for NewSubscriber {
     type Error = String;
@@ -37,6 +24,7 @@ impl TryFrom<FormData> for NewSubscriber {
         Ok(Self { email, name })
     }
 }
+
 
 // creates a span 
 #[tracing::instrument(
@@ -183,5 +171,32 @@ pub async fn store_token(
         tracing::error!("Failed to execute query: {:?}", e);
         StoreTokenError(e)
     })?;
+    Ok(())
+}
+
+pub struct StoreTokenError(sqlx::Error);
+
+impl std::fmt::Display for StoreTokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        error_chain_fmt(self, f)
+    }
+}
+
+impl std::error::Error for StoreTokenError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.0)
+    }
+}
+
+pub fn error_chain_fmt(
+    e: &impl std::error::Error,
+    f: &mut std::fmt::Formatter<'_>,
+) -> std::fmt::Result {
+    writeln!(f, "{}\n", e)?;
+    let mut current = e.source();
+    while let Some(cause) = current {
+        writeln!(f, "Caused by:\n\t{}", cause)?;
+        current = cause.source();
+    }
     Ok(())
 }
