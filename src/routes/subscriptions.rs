@@ -7,9 +7,7 @@ use crate::startup::ApplicationBaseUrl;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use sqlx::{Postgres, Transaction };
 use actix_web::http::StatusCode;
-
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, };
-
 
 #[derive(Debug)]
 pub enum SubscribeError {
@@ -24,7 +22,6 @@ pub struct FormData {
     name: String,
 }
 
-
 impl TryFrom<FormData> for NewSubscriber {
     type Error = String;
 
@@ -34,7 +31,6 @@ impl TryFrom<FormData> for NewSubscriber {
         Ok(Self { email, name })
     }
 }
-
 
 impl std::fmt::Display for SubscribeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -208,7 +204,6 @@ pub async fn store_token(
     Ok(())
 }
 
-#[derive(Debug)]
 pub struct StoreTokenError(sqlx::Error);
 
 impl std::fmt::Display for StoreTokenError {
