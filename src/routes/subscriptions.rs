@@ -2,12 +2,13 @@ use actix_web::{web, HttpResponse, ResponseError };
 use sqlx::PgPool;
 use chrono::Utc;
 use uuid::Uuid;
-use crate::email_client::EmailClient;
-use crate::startup::ApplicationBaseUrl;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use sqlx::{Postgres, Transaction };
 use actix_web::http::StatusCode;
+
+use crate::email_client::EmailClient;
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, };
+use crate::startup::ApplicationBaseUrl;
 
 #[derive(Debug)]
 pub enum SubscribeError {
