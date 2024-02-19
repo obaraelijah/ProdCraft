@@ -17,8 +17,7 @@ pub struct Application {
 }
 
 impl Application {
-    //  converted the `build` function into a constructor for
-    // `Application`.
+    //  converted the `build` function into a constructor for `Application`.
     pub async fn build(configuration: Settings) -> Result<Self, std::io::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
 
