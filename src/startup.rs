@@ -1,14 +1,14 @@
 use crate::routes::{confirm, health_check, subscribe, publish_newsletter};
+use crate::email_client::EmailClient;
+use crate::configuration::Settings;
+use crate::configuration::DatabaseSettings;
 use actix_web::{ web, App, HttpServer };
 use actix_web::web::Data;
 use actix_web::dev::Server;
 use std::net::TcpListener;
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
-use crate::email_client::EmailClient;
-use crate::configuration::Settings;
 use sqlx::postgres::PgPoolOptions;
-use crate::configuration::DatabaseSettings;
 
 pub struct Application {
     port: u16,
@@ -16,7 +16,7 @@ pub struct Application {
 }
 
 impl Application {
-    //  converted the `build` function into a constructor for `Application`.
+    // converted the build function into a constructor for Application.
     pub async fn build(configuration: Settings) -> Result<Self, std::io::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
 
