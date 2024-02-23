@@ -2,6 +2,7 @@ use crate::routes::{confirm, health_check, subscribe, publish_newsletter};
 use crate::email_client::EmailClient;
 use crate::configuration::Settings;
 use crate::configuration::DatabaseSettings;
+use crate::routes::home;
 use actix_web::{ web, App, HttpServer };
 use actix_web::web::Data;
 use actix_web::dev::Server;
@@ -64,6 +65,7 @@ pub fn run(listener: TcpListener, db_pool: PgPool, email_client: EmailClient, ba
             .route("/subscriptions/confirm", web::get().to(confirm))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/newsletters", web::post().to(publish_newsletter))
+            .route("/", web::get().to(home))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
