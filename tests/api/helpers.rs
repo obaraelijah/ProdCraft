@@ -164,7 +164,7 @@ pub async fn spawn_app() -> TestApp {
         email_server,
     }
     (&test_app.db_pool).await;
-    test-app
+    test_app
 }
 
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
