@@ -5,6 +5,7 @@ use anyhow::Context;
 use crate::routes::error_chain_fmt;
 use crate::email_client::EmailClient;
 use crate::domain::SubscriberEmail;
+use crate::telemetry::spawn_blocking_with_tracing;
 use secrecy::{Secret, ExposeSecret};
 use actix_web::http::header::{HeaderMap, HeaderValue}; 
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
@@ -77,15 +78,12 @@ async fn validate_credentials(
         )
         .map_err(PublishError::UnexpectedError)?;
 
-    let current_span = tracing::Span::current();
-    tokio::task::spawn_blocking(move || {
-        current_span.in_scope(|| {
-            verify_password_hash(
-                expected_password_hash,
-                credentials.password
-            )
-        })
-    })
+    spawn_blocking_with_tracing(move || {
+        verify_password_hash(
+            expected_password_hash,
+            credentials.password
+        )
+     })
     .await
     .context("Failed to spawn blocking task.")
     .map_err(PublishError::UnexpectedError)??;
