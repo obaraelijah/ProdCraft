@@ -27,7 +27,7 @@ pub struct TestApp {
     pub db_pool: PgPool,
     pub email_server: MockServer,
     pub port: u16,
-    test_user: TestUser
+    pub test_user: TestUser
 }
 
 pub struct ConfirmationLinks {
@@ -129,24 +129,14 @@ impl TestApp {
 }
 
 pub async fn spawn_app() -> TestApp {
-    // The first time `initialize` is invoked the code in `TRACING` is executed.
-    // All other invocations will instead skip execution.
-    let email_server = MockServer::start().await;
-    let test_app = TestApp {
-        test_user: TestUser::generate()
-    };
-    test_app.test_user.store(&test_app.db_pool).await;
-    test_app
-
     Lazy::force(&TRACING);
 
-    let configuration = {
-        let mut c = get_configuration().expect("Failed to read configuration.");
-        c.database.database_name = Uuid::new_v4().to_string();
-        c.email_client.base_url = email_server.uri();
-        c.application.port = 0;
-        c
-    };
+    let email_server = MockServer::start().await;
+
+    let mut configuration = get_configuration().expect("Failed to read configuration.");
+    configuration.database.database_name = Uuid::new_v4().to_string();
+    configuration.email_client.base_url = email_server.uri();
+    configuration.application.port = 0;
 
     configure_database(&configuration.database).await;
 
@@ -157,16 +147,22 @@ pub async fn spawn_app() -> TestApp {
     let application_port = application.port();
     let _ = tokio::spawn(application.run_until_stopped());
 
+    let db_pool = get_connection_pool(&configuration.database);
+
+    let test_user = TestUser::generate();
+
     let test_app = TestApp {
         address: format!("http://localhost:{}", application_port),
         port: application_port,
-        db_pool: get_connection_pool(&configuration.database),
+        db_pool,
         email_server,
-    }
-    (&test_app.db_pool).await;
+        test_user, 
+    };
+
+    test_app.test_user.store(&test_app.db_pool).await;
+
     test_app
 }
-
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
     //create db
     let mut connection = PgConnection::connect_with(&config.without_db())
