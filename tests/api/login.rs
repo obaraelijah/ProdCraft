@@ -1,5 +1,7 @@
 use crate::helpers::spawn_app;
 use crate::helpers::assert_is_redirect_to;
+use reqwest::header::HeaderValue;
+use std::collections::HashSet;
 
 #[tokio::test]
 async fn an_error_flash_message_is_set_on_failure() {

@@ -5,8 +5,6 @@ use crate::authentication::{validate_credentials, Credentials, AuthError};
 use sqlx::PgPool;
 use crate::routes::error_chain_fmt;
 use actix_web::error::InternalError;
-use reqwest::header::HeaderValue;
-use std::collections::HashSet;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
