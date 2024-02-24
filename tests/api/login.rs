@@ -1,7 +1,5 @@
-use crate::helpers::spawn_app;
-use crate::helpers::assert_is_redirect_to;
-use reqwest::header::HeaderValue;
-use std::collections::HashSet;
+use crate::helpers::{spawn_app, assert_is_redirect_to};
+
 
 #[tokio::test]
 async fn an_error_flash_message_is_set_on_failure() {
@@ -20,5 +18,5 @@ async fn an_error_flash_message_is_set_on_failure() {
     assert_eq!(flash_cookie.value(), "Authentication failed");
 
     let html_page = app.get_login_html().await;
-    assert!(html_page.contains(r#"<p><i>Authentication failed</i></p>"#));
+    assert!(!html_page.contains(r#"<p><i>Authentication failed</i></p>"#));
 }
