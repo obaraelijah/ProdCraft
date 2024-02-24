@@ -56,8 +56,6 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
 
 pub struct ApplicationBaseUrl(pub String);
 
-#[derive(Clone)]
-pub struct HmacSecret(pub Secret<String>);
 
 pub fn run(
     listener: TcpListener, 
@@ -88,3 +86,6 @@ pub fn run(
     .run();
     Ok(server)
 }
+#[derive(Clone, Debug)]
+pub struct HmacSecret(pub Secret<String>);
+

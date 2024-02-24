@@ -1,14 +1,13 @@
-use actix_web::{HttpResponse, web, ResponseError};
+use actix_web::{HttpResponse, web};
 use actix_web::http::header::LOCATION;
 use secrecy::Secret;
 use crate::authentication::{validate_credentials, Credentials, AuthError};
 use sqlx::PgPool;
 use crate::routes::error_chain_fmt;
 use crate::startup::HmacSecret;
-use actix_web::http::StatusCode;
 use hmac::{Hmac, Mac};
-use secret::ExposeSecret;
 use actix_web::error::InternalError;
+use secrecy::ExposeSecret;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -39,7 +38,11 @@ pub async fn login(
     form: web::Form<FormData>, 
     pool: web::Data<PgPool>,
     secret: web::Data<HmacSecret>,
-) -> Result<HttpResponse, InternalError<LoginError>>> {
+) -> Result<HttpResponse, InternalError<LoginError>> {
+    let credentials = Credentials {
+        username: form.0.username,
+        password: form.0.password,
+    };
     match validate_credentials(credentials, &pool).await {
         Ok(user_id) => {
             tracing::Span::current()
