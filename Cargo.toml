@@ -14,7 +14,7 @@ name = "prod_craft"
 serde = { version = "1", features = ["derive"] }
 actix-web = "4"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "cookies"] }
 sqlx = { version = "0.7", features = [ "runtime-async-std", "macros","chrono","migrate","uuid","tls-rustls", "postgres"] }
 config = "0.13"
 uuid = { version = "1", features = ["v4"] }
@@ -39,6 +39,7 @@ htmlescape = "0.3"
 hmac = { version = "0.12", features = ["std"] }
 sha2 = "0.10"
 hex = "0.4"
+
 
 [dev-dependencies]
 claim = "0.5"
