@@ -1,4 +1,4 @@
-use actix_session::Session;
+use crate::session_state::TypedSession;
 use actix_web::{web, HttpResponse};
 use uuid::Uuid;
 use actix_web::http::header::ContentType;
@@ -13,7 +13,7 @@ where
     actix_web::error::ErrorInternalServerError(e)
 }
 pub async fn admin_dashboard(
-    session: Session,
+    session: TypedSession,
     pool: web::Data<PgPool>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let username = if let Some(user_id) = session
