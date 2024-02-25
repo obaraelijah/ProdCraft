@@ -17,7 +17,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "cookies"] }
 sqlx = { version = "0.7", features = [ "runtime-async-std", "macros","chrono","migrate","uuid","tls-rustls", "postgres"] }
 config = "0.13"
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 chrono = "0.4.15"
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
