@@ -2,10 +2,9 @@ use actix_web::{HttpResponse, web};
 use actix_web::http::header::LOCATION;
 use secrecy::Secret;
 use crate::authentication::{validate_credentials, Credentials, AuthError};
-use sqlx::PgPool;
 use crate::routes::error_chain_fmt;
+use sqlx::PgPool;
 use actix_web::error::InternalError;
-use actix_web::cookie::Cookie;
 use actix_web_flash_messages::FlashMessage;
 
 #[derive(serde::Deserialize)]

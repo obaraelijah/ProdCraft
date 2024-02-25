@@ -1,8 +1,8 @@
 use crate::routes::{confirm, health_check, subscribe, publish_newsletter};
+use crate::routes::{home, login_form, login, admin_dashboard};
 use crate::email_client::EmailClient;
 use crate::configuration::Settings;
 use crate::configuration::DatabaseSettings;
-use crate::routes::{home, login_form, login};
 use actix_web::{ web, App, HttpServer };
 use actix_web::web::Data;
 use actix_web::dev::Server;
@@ -10,11 +10,10 @@ use std::net::TcpListener;
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
 use sqlx::postgres::PgPoolOptions;
-use secrecy::Secret;
+use secrecy::{Secret, ExposeSecret};
 use actix_web_flash_messages::FlashMessagesFramework;
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web::cookie::Key;
-use secrecy::ExposeSecret;
 use actix_session::SessionMiddleware;
 use actix_session::storage::RedisSessionStore;
 
@@ -24,15 +23,10 @@ pub struct Application {
 }
 
 impl Application {
-    // converted the build function into a constructor for Application.
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
-
         let email_client = configuration.email_client.client();
-        let address = format!(
-            "{}:{}",
-            configuration.application.host, configuration.application.port
-        );
+        let address = format!("{}:{}", configuration.application.host, configuration.application.port);
         let listener = TcpListener::bind(&address)?; 
         let port = listener.local_addr().unwrap().port();
         let server = run(
@@ -40,9 +34,9 @@ impl Application {
             connection_pool, 
             email_client,
             configuration.application.base_url,
-            configuration.redis_uri,
             HmacSecret(configuration.application.hmac_secret.clone()),
-        )?;
+            configuration.redis_uri,
+        ).await?;
         
         Ok(Self { port, server })
     }
@@ -54,7 +48,6 @@ impl Application {
     pub async fn run_until_stopped(self) -> Result<(), std::io::Error> {
         self.server.await
     }
-    
 }
 
 pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
@@ -62,7 +55,6 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
 }
 
 pub struct ApplicationBaseUrl(pub String);
-
 
 async fn run(
     listener: TcpListener, 
@@ -75,9 +67,6 @@ async fn run(
     let db_pool = Data::new(db_pool);
     let email_client = Data::new(email_client);
     let base_url = Data::new(ApplicationBaseUrl(base_url));
-    let message_store = CookieMessageStore::builder(
-        Key::from(hmac_secret.0.expose_secret().as_bytes())
-    ).build();
     let secret_key = Key::from(hmac_secret.0.expose_secret().as_bytes());
     let message_store = CookieMessageStore::builder(secret_key.clone()).build();
     let message_framework = FlashMessagesFramework::builder(message_store).build();
@@ -91,6 +80,7 @@ async fn run(
             .route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))
             .route("/login", web::post().to(login))
+            .route("/admin/dashboard", web::get().to(admin_dashboard))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
@@ -103,6 +93,6 @@ async fn run(
     .run();
     Ok(server)
 }
+
 #[derive(Clone, Debug)]
 pub struct HmacSecret(pub Secret<String>);
-
