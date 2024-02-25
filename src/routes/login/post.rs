@@ -48,7 +48,7 @@ pub async fn login(
                 .record("user_id", &tracing::field::display(&user_id));
             session.renew(); // to prevent session fixation attacks
             session
-                .insert("user_id", user_id)
+                .insert_user_id(user_id)
                 .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
             Ok(HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/admin/dashboard"))
