@@ -3,7 +3,7 @@ use prod_craft::telemetry::{get_subscriber, init_subscriber};
 use prod_craft::startup::Application;
 
 #[tokio::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> anyhow::Result<()> {
     let subscriber = get_subscriber("prod_craft".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
