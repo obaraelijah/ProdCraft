@@ -15,6 +15,7 @@ use actix_web_flash_messages::FlashMessagesFramework;
 use actix_web_flash_messages::storage::CookieMessageStore;
 use actix_web::cookie::Key;
 use secrecy::ExposeSecret;
+use actix_session::SessionMiddleware;
 
 pub struct Application {
     port: u16,
@@ -74,6 +75,8 @@ fn run(
     let message_store = CookieMessageStore::builder(
         Key::from(hmac_secret.0.expose_secret().as_bytes())
     ).build();
+    let secret_key = Key::from(hmac_secret.0.expose_secret().as_bytes());
+    let message_store = CookieMessageStore::builder(secret_key.clone()).build();
     let message_framework = FlashMessagesFramework::builder(message_store).build();
     let server = HttpServer::new(move || {
         App::new()
@@ -89,6 +92,7 @@ fn run(
             .app_data(base_url.clone())
             .app_data(Data::new(hmac_secret.0.clone()))
             .wrap(message_framework.clone())
+            .wrap(SessionMiddleware::new(todo!(), secret_key.clone()))
             .wrap(TracingLogger::default())
     })
     .listen(listener)?
