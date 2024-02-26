@@ -1,4 +1,4 @@
-use crate::helpers::{spawn_app, TestApp, ConfirmationLinks};
+use crate::helpers::{assert_is_redirect_to, spawn_app, TestApp, ConfirmationLinks};
 use wiremock::matchers::{any, method, path};
 use wiremock::{Mock, ResponseTemplate};
 use uuid::Uuid;
@@ -67,7 +67,7 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
 
 #[tokio::test]
 async fn newsletters_are_delivered_to_confirmed_subscribers() {
-    let app = spawn_app().await;
+    let app: TestApp = spawn_app().await;
     create_confirmed_subscriber(&app).await;
 
     Mock::given(path("/email"))
@@ -198,4 +198,33 @@ async fn invalid_password_is_rejected() {
         r#"Basic realm="publish""#,
         response.headers()["WWW-Authenticate"]
     );
+}
+
+#[tokio::test]
+async fn you_must_be_logged_in_to_see_the_newsletter_form() {
+    // Arrange
+    let app = spawn_app().await;
+
+    // Act
+    let response = app.get_publish_newsletter().await;
+
+    // Assert
+    assert_is_redirect_to(&response, "/login");
+}
+
+#[tokio::test]
+async fn you_must_be_logged_in_to_publish_a_newsletter() {
+    // Arrange
+    let app = spawn_app().await;
+
+    // Act
+    let newsletter_request_body = serde_json::json!({
+        "title": "Newsletter title",
+        "text_content": "Newsletter body as plain text",
+        "html_content": "<p>Newsletter body as HTML</p>",
+    });
+    let response = app.post_publish_newsletter(&newsletter_request_body).await;
+
+    // Assert
+    assert_is_redirect_to(&response, "/login");
 }
