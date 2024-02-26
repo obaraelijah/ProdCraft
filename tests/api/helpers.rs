@@ -153,6 +153,10 @@ impl TestApp {
 
     }
 
+    pub async fn get_change_password_html(&self) -> String {
+        self.get_change_password().await.text().await.unwrap()
+    }
+
     pub fn get_confirmation_links(
         &self,
         email_request: &wiremock::Request
