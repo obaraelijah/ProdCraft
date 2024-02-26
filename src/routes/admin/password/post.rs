@@ -39,6 +39,11 @@ pub async fn change_password(
         )
         .send();
     }
+    let new_password = form.new_password.expose_secret();
+    if !is_password_strong(&new_password) {
+        FlashMessage::error("Password must be between 12 and 128 characters long.").send();
+        return Ok(see_other("/admin/password"));
+    }
     let username = get_username(user_id, &pool).await.map_err(e500)?;
 
     let credentials = Credentials {
@@ -55,4 +60,8 @@ pub async fn change_password(
         }
     }
     todo!()
+}
+
+fn is_password_strong(password: &str) -> bool {
+    password.len() >= 12 && password.len() <= 128
 }
