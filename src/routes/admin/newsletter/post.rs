@@ -2,6 +2,8 @@ use crate::authentication::UserId;
 use crate::domain::SubscriberEmail;
 use crate::email_client::EmailClient;
 use crate::utils::{e500, see_other};
+use crate::utils::e400;
+use crate::idempotency::IdempotencyKey;
 use actix_web::web::ReqData;
 use actix_web::{web, HttpResponse};
 use actix_web_flash_messages::FlashMessage;
@@ -27,16 +29,15 @@ pub async fn publish_newsletter(
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
 ) -> Result<HttpResponse, actix_web::Error> {
+    let FormData { title, text_content, html_content, idempotency_key } = form.0;
+    let idempotency_key: IdempotencyKey = idempotency_key.try_into().map_err(e400)?;
     let subscribers = get_confirmed_subscribers(&pool).await.map_err(e500)?;
     for subscriber in subscribers {
         match subscriber {
             Ok(subscriber) => {
                 email_client
                     .send_email(
-                        &subscriber.email,
-                        &form.title,
-                        &form.html_content,
-                        &form.text_content,
+                        &subscriber.email, &title, &html_content, &text_content
                     )
                     .await
                     .with_context(|| {
