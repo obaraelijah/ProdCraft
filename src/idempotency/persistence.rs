@@ -5,6 +5,7 @@ use actix_web::http::StatusCode;
 use anyhow::Ok;
 use sqlx::PgPool;
 use uuid::Uuid;
+use sqlx::{Postgres, Transaction};
 use sqlx::postgres::PgHasArrayType;
 
 #[derive(Debug, sqlx::Type)]
@@ -14,10 +15,6 @@ struct HeaderPairRecord {
     value: Vec<u8>,
 }
 
-pub enum NextAction {
-    StartProcessing,
-    ReturnSavedResponse(HttpResponse)
-}
 
 impl PgHasArrayType for HeaderPairRecord {
     fn array_type_info() -> sqlx::postgres::PgTypeInfo {
@@ -34,7 +31,7 @@ pub async fn get_saved_response(
         r#"
         SELECT
             response_status_code as "response_status_code!",
-            response_headers as "response_headers: Vec<HeaderPairRecord>",
+            response_headers as "response_headers!: Vec<HeaderPairRecord>",
             response_body as "response_body!"
         FROM idempotency
         WHERE
@@ -59,9 +56,8 @@ pub async fn get_saved_response(
         Ok(None)
     }
 }
-
 pub async fn save_response(
-    pool: &PgPool,
+    mut transaction: Transaction<'static, Postgres>,
     idempotency_key: &IdempotencyKey,
     user_id: Uuid,
     http_response: HttpResponse
@@ -95,10 +91,18 @@ pub async fn save_response(
         headers,
         body.as_ref()        
     )
-    .execute(pool)
-    .await?;
+        .execute(&mut *transaction)
+        .await?;
+    transaction.commit().await?;
     let http_response = response_head.set_body(body).map_into_boxed_body();
     Ok(http_response)
+}
+
+
+#[allow(clippy::large_enum_variant)]
+pub enum NextAction {
+    StartProcessing(Transaction<'static, Postgres>),
+    ReturnSavedResponse(HttpResponse)
 }
 
 pub async fn try_processing(
@@ -106,6 +110,7 @@ pub async fn try_processing(
     idempotency_key: &IdempotencyKey,
     user_id: Uuid
 ) -> Result<NextAction, anyhow::Error> {
+    let mut transaction = pool.begin().await?;
     let n_inserted_rows = sqlx::query!(
         r#"
         INSERT INTO idempotency (
@@ -118,12 +123,12 @@ pub async fn try_processing(
         "#,
         user_id,
         idempotency_key.as_ref()
-    )
-    .execute(pool)
-    .await?
-    .rows_affected();
-if n_inserted_rows > 0 {
-        Ok(NextAction::StartProcessing)
+        )
+        .execute(&mut *transaction)
+        .await?
+        .rows_affected();
+    if n_inserted_rows > 0 {
+        Ok(NextAction::StartProcessing(transaction))
     } else {
     let saved_response = get_saved_response(pool, idempotency_key, user_id)
         .await?
