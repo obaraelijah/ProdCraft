@@ -1,11 +1,27 @@
 use crate::authentication::UserId;
-use crate::idempotency::{save_response, try_processing, IdempotencyKey, NextAction};
+use crate::idempotency::{
+    save_response,
+    try_processing,
+    IdempotencyKey,
+    NextAction,
+};
 use crate::utils::e400;
-use crate::utils::{e500, see_other};
-use actix_web::{web, HttpResponse};
+use crate::utils::{
+    e500,
+    see_other,
+};
+use actix_web::{
+    web,
+    HttpResponse,
+};
 use actix_web_flash_messages::FlashMessage;
 use anyhow::Context;
-use sqlx::{Executor, PgPool, Postgres, Transaction};
+use sqlx::{
+    Executor,
+    PgPool,
+    Postgres,
+    Transaction,
+};
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -17,10 +33,7 @@ pub struct FormData {
 }
 
 fn success_message() -> FlashMessage {
-    FlashMessage::info(
-        "The newsletter issue has been accepted - \
-        emails will go out shortly.",
-    )
+    FlashMessage::info("The newsletter issue has been accepted - emails will go out shortly.")
 }
 
 #[tracing::instrument(

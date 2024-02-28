@@ -40,7 +40,7 @@ mod tests {
             let email = SafeEmail().fake_with_rng(g);
             Self(email)
         }
-    } 
+    }
 
     #[quickcheck_macros::quickcheck]
     fn valid_emails_are_parsed_successfully(valid_email: ValidEmailFixture) -> bool {

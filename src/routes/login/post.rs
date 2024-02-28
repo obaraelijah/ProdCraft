@@ -1,12 +1,19 @@
-use actix_web::{HttpResponse, web};
-use actix_web::http::header::LOCATION;
-use secrecy::Secret;
-use crate::authentication::{validate_credentials, Credentials, AuthError};
+use crate::authentication::{
+    validate_credentials,
+    AuthError,
+    Credentials,
+};
 use crate::routes::error_chain_fmt;
-use sqlx::PgPool;
-use actix_web::error::InternalError;
-use actix_web_flash_messages::FlashMessage;
 use crate::session_state::TypedSession;
+use actix_web::error::InternalError;
+use actix_web::http::header::LOCATION;
+use actix_web::{
+    web,
+    HttpResponse,
+};
+use actix_web_flash_messages::FlashMessage;
+use secrecy::Secret;
+use sqlx::PgPool;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -28,13 +35,12 @@ impl std::fmt::Debug for LoginError {
     }
 }
 
-
 #[tracing::instrument(
     skip(form, pool, session),
     fields(username=tracing::field::Empty, user_id=tracing::field::Empty)
 )]
 pub async fn login(
-    form: web::Form<FormData>, 
+    form: web::Form<FormData>,
     pool: web::Data<PgPool>,
     session: TypedSession,
 ) -> Result<HttpResponse, InternalError<LoginError>> {
@@ -44,8 +50,7 @@ pub async fn login(
     };
     match validate_credentials(credentials, &pool).await {
         Ok(user_id) => {
-            tracing::Span::current()
-                .record("user_id", &tracing::field::display(&user_id));
+            tracing::Span::current().record("user_id", &tracing::field::display(&user_id));
             session.renew(); // to prevent session fixation attacks
             session
                 .insert_user_id(user_id)

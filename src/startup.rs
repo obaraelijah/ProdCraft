@@ -1,25 +1,42 @@
-use crate::routes::{
-    admin_dashboard, change_password, change_password_form, confirm, health_check, home, log_out,
-    login, login_form, publish_newsletter, publish_newsletter_form, subscribe,
-};
 use crate::authentication::reject_anonymous_users;
-use crate::email_client::EmailClient;
-use crate::configuration::Settings;
 use crate::configuration::DatabaseSettings;
-use actix_web::{ web, App, HttpServer };
-use actix_web::web::Data;
-use actix_web::dev::Server;
-use std::net::TcpListener;
-use sqlx::PgPool;
-use tracing_actix_web::TracingLogger;
-use sqlx::postgres::PgPoolOptions;
-use secrecy::{Secret, ExposeSecret};
-use actix_web_flash_messages::FlashMessagesFramework;
-use actix_web_flash_messages::storage::CookieMessageStore;
-use actix_web::cookie::Key;
-use actix_session::SessionMiddleware;
+use crate::configuration::Settings;
+use crate::email_client::EmailClient;
+use crate::routes::{
+    admin_dashboard,
+    change_password,
+    change_password_form,
+    confirm,
+    health_check,
+    home,
+    log_out,
+    login,
+    login_form,
+    publish_newsletter,
+    publish_newsletter_form,
+    subscribe,
+};
 use actix_session::storage::RedisSessionStore;
+use actix_session::SessionMiddleware;
+use actix_web::cookie::Key;
+use actix_web::dev::Server;
+use actix_web::web::Data;
+use actix_web::{
+    web,
+    App,
+    HttpServer,
+};
+use actix_web_flash_messages::storage::CookieMessageStore;
+use actix_web_flash_messages::FlashMessagesFramework;
 use actix_web_lab::middleware::from_fn;
+use secrecy::{
+    ExposeSecret,
+    Secret,
+};
+use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use std::net::TcpListener;
+use tracing_actix_web::TracingLogger;
 
 pub struct Application {
     port: u16,
@@ -30,18 +47,22 @@ impl Application {
     pub async fn build(configuration: Settings) -> Result<Self, anyhow::Error> {
         let connection_pool = get_connection_pool(&configuration.database);
         let email_client = configuration.email_client.client();
-        let address = format!("{}:{}", configuration.application.host, configuration.application.port);
-        let listener = TcpListener::bind(&address)?; 
+        let address = format!(
+            "{}:{}",
+            configuration.application.host, configuration.application.port
+        );
+        let listener = TcpListener::bind(&address)?;
         let port = listener.local_addr().unwrap().port();
         let server = run(
-            listener, 
-            connection_pool, 
+            listener,
+            connection_pool,
             email_client,
             configuration.application.base_url,
             HmacSecret(configuration.application.hmac_secret.clone()),
             configuration.redis_uri,
-        ).await?;
-        
+        )
+        .await?;
+
         Ok(Self { port, server })
     }
 
@@ -61,10 +82,10 @@ pub fn get_connection_pool(configuration: &DatabaseSettings) -> PgPool {
 pub struct ApplicationBaseUrl(pub String);
 
 async fn run(
-    listener: TcpListener, 
-    db_pool: PgPool, 
-    email_client: EmailClient, 
-    base_url: String, 
+    listener: TcpListener,
+    db_pool: PgPool,
+    email_client: EmailClient,
+    base_url: String,
     hmac_secret: HmacSecret,
     redis_uri: Secret<String>,
 ) -> Result<Server, anyhow::Error> {
@@ -78,7 +99,10 @@ async fn run(
     let server = HttpServer::new(move || {
         App::new()
             .wrap(message_framework.clone())
-            .wrap(SessionMiddleware::new(redis_store.clone(), secret_key.clone()))
+            .wrap(SessionMiddleware::new(
+                redis_store.clone(),
+                secret_key.clone(),
+            ))
             .wrap(TracingLogger::default())
             .route("/", web::get().to(home))
             .route("/login", web::get().to(login_form))
@@ -87,14 +111,14 @@ async fn run(
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
             .service(
-        web::scope("/admin")
+                web::scope("/admin")
                     .wrap(from_fn(reject_anonymous_users))
                     .route("/dashboard", web::get().to(admin_dashboard))
                     .route("/newsletters", web::get().to(publish_newsletter_form))
                     .route("/newsletters", web::post().to(publish_newsletter))
                     .route("/password", web::get().to(change_password_form))
                     .route("/password", web::post().to(change_password))
-                    .route("/logout", web::post().to(log_out)),  
+                    .route("/logout", web::post().to(log_out)),
             )
             .app_data(db_pool.clone())
             .app_data(email_client.clone())

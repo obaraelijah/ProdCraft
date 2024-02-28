@@ -1,10 +1,22 @@
-use crate::helpers::{assert_is_redirect_to, spawn_app, ConfirmationLinks, TestApp};
+use crate::helpers::{
+    assert_is_redirect_to,
+    spawn_app,
+    ConfirmationLinks,
+    TestApp,
+};
 use fake::faker::internet::en::SafeEmail;
 use fake::faker::name::en::Name;
 use fake::Fake;
 use std::time::Duration;
-use wiremock::matchers::{any, method, path};
-use wiremock::{Mock, ResponseTemplate};
+use wiremock::matchers::{
+    any,
+    method,
+    path,
+};
+use wiremock::{
+    Mock,
+    ResponseTemplate,
+};
 
 async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
     // We are working with multiple subscribers now,
@@ -74,8 +86,7 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
     // Act - Part 2 - Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
     assert!(html_page.contains(
-        "<p><i>The newsletter issue has been accepted - \
-        emails will go out shortly.</i></p>"
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
     ));
     app.dispatch_all_pending_emails().await;
     // Mock verifies on Drop that we haven't sent the newsletter email
@@ -108,8 +119,7 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
     // Act - Part 2 - Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
     assert!(html_page.contains(
-        "<p><i>The newsletter issue has been accepted - \
-        emails will go out shortly.</i></p>"
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
     ));
     app.dispatch_all_pending_emails().await;
     // Mock verifies on Drop that we have sent the newsletter email
@@ -174,8 +184,7 @@ async fn newsletter_creation_is_idempotent() {
     // Act - Part 2 - Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
     assert!(html_page.contains(
-        "<p><i>The newsletter issue has been accepted - \
-        emails will go out shortly.</i></p>"
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
     ));
 
     // Act - Part 3 - Submit newsletter form **again**
@@ -185,8 +194,7 @@ async fn newsletter_creation_is_idempotent() {
     // Act - Part 4 - Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
     assert!(html_page.contains(
-        "<p><i>The newsletter issue has been accepted - \
-        emails will go out shortly.</i></p>"
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
     ));
 
     app.dispatch_all_pending_emails().await;

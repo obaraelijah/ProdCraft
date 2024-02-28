@@ -1,6 +1,12 @@
 use crate::helpers::spawn_app;
-use wiremock::matchers::{method, path};
-use wiremock::{Mock, ResponseTemplate};
+use wiremock::matchers::{
+    method,
+    path,
+};
+use wiremock::{
+    Mock,
+    ResponseTemplate,
+};
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
@@ -47,21 +53,20 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
         ("email=ursula_le_guin%40gmail.com", "missing the name"),
-        ("", "missing both name and email")
+        ("", "missing both name and email"),
     ];
 
-    for (invalid_body, error_message ) in test_cases {
+    for (invalid_body, error_message) in test_cases {
         let response = app.post_subscriptions(invalid_body.into()).await;
 
-            assert_eq!(
-                400,
-                response.status().as_u16(),
-                "The API did not fail with 400 Bad Request when the payload was {}",
-                error_message
-       );
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad Request when the payload was {}",
+            error_message
+        );
     }
 }
-
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
@@ -80,7 +85,7 @@ async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
             response.status().as_u16(),
             "The API did not return a 400 Bad Request when the payload was {}.",
             description
-        );    
+        );
     }
 }
 
@@ -90,11 +95,11 @@ async fn subscribe_sends_a_confirmation_email_for_valid_data() {
     let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
 
     Mock::given(path("/email"))
-            .and(method("POST"))
-            .respond_with(ResponseTemplate::new(200))
-            .expect(1)
-            .mount(&app.email_server)
-            .await;
+        .and(method("POST"))
+        .respond_with(ResponseTemplate::new(200))
+        .expect(1)
+        .mount(&app.email_server)
+        .await;
 
     app.post_subscriptions(body.into()).await;
 
@@ -126,15 +131,14 @@ async fn subscribe_sends_a_confirmation_email_with_a_link() {
             .links(s)
             .filter(|l| *l.kind() == linkify::LinkKind::Url)
             .collect();
-            assert_eq!(links.len(), 1);
+        assert_eq!(links.len(), 1);
         links[0].as_str().to_owned()
     };
 
     let html_link = get_link(&body["HtmlBody"].as_str().unwrap());
     let text_link = get_link(&body["TextBody"].as_str().unwrap());
 
-    assert_eq!(html_link, text_link);   
-
+    assert_eq!(html_link, text_link);
 }
 
 #[tokio::test]
@@ -149,8 +153,5 @@ async fn subscribe_fails_if_there_is_a_fatal_database_error() {
 
     let response = app.post_subscriptions(body.into()).await;
 
-    assert_eq!(response.status().as_u16(), 500);    
+    assert_eq!(response.status().as_u16(), 500);
 }
-
-
-

@@ -1,14 +1,37 @@
 use argon2::password_hash::SaltString;
-use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
+use argon2::{
+    Algorithm,
+    Argon2,
+    Params,
+    PasswordHasher,
+    Version,
+};
 use once_cell::sync::Lazy;
-use sqlx::{Connection, Executor, PgConnection, PgPool};
+use prod_craft::configuration::{
+    get_configuration,
+    DatabaseSettings,
+};
+use prod_craft::email_client::EmailClient;
+use prod_craft::issue_delivery_worker::{
+    try_execute_task,
+    ExecutionOutcome,
+};
+use prod_craft::startup::{
+    get_connection_pool,
+    Application,
+};
+use prod_craft::telemetry::{
+    get_subscriber,
+    init_subscriber,
+};
+use sqlx::{
+    Connection,
+    Executor,
+    PgConnection,
+    PgPool,
+};
 use uuid::Uuid;
 use wiremock::MockServer;
-use prod_craft::configuration::{get_configuration, DatabaseSettings};
-use prod_craft::email_client::EmailClient;
-use prod_craft::issue_delivery_worker::{try_execute_task, ExecutionOutcome};
-use prod_craft::startup::{get_connection_pool, Application};
-use prod_craft::telemetry::{get_subscriber, init_subscriber};
 
 // Ensure that the `tracing` stack is only initialised once using `once_cell`
 static TRACING: Lazy<()> = Lazy::new(|| {

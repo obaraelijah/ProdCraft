@@ -1,12 +1,17 @@
 use crate::domain::SubscriberEmail;
 use crate::email_client::EmailClient;
-use secrecy::{ExposeSecret, Secret};
-use sqlx::ConnectOptions;
-use std::convert::{TryFrom, TryInto};
+use secrecy::{
+    ExposeSecret,
+    Secret,
+};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgSslMode;
-
+use sqlx::ConnectOptions;
+use std::convert::{
+    TryFrom,
+    TryInto,
+};
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
@@ -22,7 +27,7 @@ pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
     pub base_url: String,
-    pub hmac_secret: Secret<String>
+    pub hmac_secret: Secret<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -41,7 +46,7 @@ pub struct EmailClientSettings {
     pub base_url: String,
     pub sender_email: String,
     pub authorization_token: Secret<String>,
-    pub timeout_milliseconds: u64
+    pub timeout_milliseconds: u64,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {
@@ -60,7 +65,11 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         .add_source(config::File::from(
             configuration_directory.join(&environment_filename),
         ))
-        .add_source(config::Environment::with_prefix("APP").prefix_separator("_").separator("__"))
+        .add_source(
+            config::Environment::with_prefix("APP")
+                .prefix_separator("_")
+                .separator("__"),
+        )
         .build()?;
 
     settings.try_deserialize::<Settings>()
@@ -84,7 +93,7 @@ impl DatabaseSettings {
             .port(self.port)
             .ssl_mode(ssl_mode)
     }
- }
+}
 
 pub enum Environment {
     Local,

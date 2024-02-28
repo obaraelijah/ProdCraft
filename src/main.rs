@@ -1,9 +1,15 @@
-use std::fmt::{Debug, Display};
-use tokio::task::JoinError;
 use prod_craft::configuration::get_configuration;
-use prod_craft::telemetry::{get_subscriber, init_subscriber};
-use prod_craft::startup::Application;
 use prod_craft::issue_delivery_worker::run_worker_until_stopped;
+use prod_craft::startup::Application;
+use prod_craft::telemetry::{
+    get_subscriber,
+    init_subscriber,
+};
+use std::fmt::{
+    Debug,
+    Display,
+};
+use tokio::task::JoinError;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -14,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
     let application = Application::build(configuration.clone()).await?;
     let application_task = tokio::spawn(application.run_until_stopped());
     let worker_task = tokio::spawn(run_worker_until_stopped(configuration));
-    
+
     tokio::select! {
         o = application_task => report_exit("API", o),
         o = worker_task => report_exit("Background worker", o),
@@ -22,10 +28,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn report_exit(
-    task_name: &str,
-    outcome: Result<Result<(), impl Debug + Display>, JoinError>
-) {
+fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>, JoinError>) {
     match outcome {
         Ok(Ok(())) => {
             tracing::info!("{} has exited", task_name)

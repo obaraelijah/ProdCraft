@@ -1,4 +1,7 @@
-use crate::helpers::{spawn_app, assert_is_redirect_to};
+use crate::helpers::{
+    assert_is_redirect_to,
+    spawn_app,
+};
 use uuid::Uuid;
 
 #[tokio::test]
@@ -53,8 +56,7 @@ async fn new_password_fields_must_match() {
     // Act - Part 3 - Follow the redirect
     let html_page = app.get_change_password_html().await;
     assert!(html_page.contains(
-        "<p><i>You entered two different new passwords - \
-        the field values must match.</i></p>"
+        "<p><i>You entered two different new passwords - the field values must match.</i></p>"
     ));
 }
 
@@ -84,9 +86,7 @@ async fn current_password_must_be_valid() {
 
     // Act - Part 3 - Follow the redirect
     let html_page = app.get_change_password_html().await;
-    assert!(html_page.contains(
-        "<p><i>The current password is incorrect.</i></p>"
-    ));
+    assert!(html_page.contains("<p><i>The current password is incorrect.</i></p>"));
 }
 
 #[tokio::test]

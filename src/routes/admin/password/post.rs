@@ -1,19 +1,29 @@
-use crate::utils::{e500, see_other};
-use crate::authentication::{validate_credentials, AuthError, Credentials, UserId};
+use crate::authentication::{
+    validate_credentials,
+    AuthError,
+    Credentials,
+    UserId,
+};
 use crate::routes::admin::dashboard::get_username;
-use actix_web::{HttpResponse, web};
+use crate::utils::{
+    e500,
+    see_other,
+};
+use actix_web::{
+    web,
+    HttpResponse,
+};
+use actix_web_flash_messages::FlashMessage;
+use secrecy::ExposeSecret;
 use secrecy::Secret;
 use sqlx::PgPool;
-use secrecy::ExposeSecret;
-use actix_web_flash_messages::FlashMessage;
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
     current_password: Secret<String>,
     new_password: Secret<String>,
-    new_password_check: Secret<String>, 
+    new_password_check: Secret<String>,
 }
-
 
 pub async fn change_password(
     form: web::Data<FormData>,
@@ -49,7 +59,7 @@ pub async fn change_password(
                 Ok(see_other("/admin/password"))
             }
             AuthError::UnexpectedError(_) => Err(e500(e).into()),
-        }
+        };
     }
     crate::authentication::change_password(*user_id, form.new_password.clone(), &pool)
         .await
@@ -61,4 +71,3 @@ pub async fn change_password(
 fn is_password_strong(password: &str) -> bool {
     password.len() >= 12 && password.len() <= 128
 }
-

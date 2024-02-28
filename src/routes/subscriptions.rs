@@ -1,14 +1,29 @@
-use actix_web::{web, HttpResponse, ResponseError };
-use sqlx::PgPool;
-use chrono::Utc;
-use uuid::Uuid;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use sqlx::{Postgres, Transaction };
 use actix_web::http::StatusCode;
+use actix_web::{
+    web,
+    HttpResponse,
+    ResponseError,
+};
 use anyhow::Context;
+use chrono::Utc;
+use rand::{
+    distributions::Alphanumeric,
+    thread_rng,
+    Rng,
+};
+use sqlx::PgPool;
+use sqlx::{
+    Postgres,
+    Transaction,
+};
+use uuid::Uuid;
 
+use crate::domain::{
+    NewSubscriber,
+    SubscriberEmail,
+    SubscriberName,
+};
 use crate::email_client::EmailClient;
-use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName, };
 use crate::startup::ApplicationBaseUrl;
 
 #[derive(thiserror::Error)]
@@ -34,7 +49,6 @@ impl TryFrom<FormData> for NewSubscriber {
     }
 }
 
-
 impl std::fmt::Debug for SubscribeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         error_chain_fmt(self, f)
@@ -50,8 +64,7 @@ impl ResponseError for SubscribeError {
     }
 }
 
-
-// creates a span 
+// creates a span
 #[tracing::instrument(
     name = "Adding a new subscriber.",
     skip(form, pool, email_client, base_url),
@@ -62,17 +75,17 @@ impl ResponseError for SubscribeError {
 )]
 
 pub async fn subscribe(
-    form: web::Form<FormData>, 
+    form: web::Form<FormData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
     base_url: web::Data<ApplicationBaseUrl>,
 ) -> Result<HttpResponse, SubscribeError> {
     let new_subscriber = form.0.try_into().map_err(SubscribeError::ValidationError)?;
-    let mut transaction =  pool
+    let mut transaction = pool
         .begin()
         .await
         .context("Failed to acquire a Postgres connection from the pool")?;
-    let subscriber_id =  insert_subscriber(&mut transaction, &new_subscriber)
+    let subscriber_id = insert_subscriber(&mut transaction, &new_subscriber)
         .await
         .context("Failed to insert new subscriber in the database.")?;
     let subscription_token = generate_subscription_token();
@@ -84,13 +97,13 @@ pub async fn subscribe(
         .await
         .context("Failed to commit SQL transaction to store a new subscriber.")?;
     send_confirmation_email(
-        &email_client, 
-        new_subscriber, 
+        &email_client,
+        new_subscriber,
         &base_url.0,
         &subscription_token,
     )
-        .await
-        .context("Failed to send a confirmation email.")?;
+    .await
+    .context("Failed to send a confirmation email.")?;
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -114,26 +127,20 @@ pub async fn send_confirmation_email(
 ) -> Result<(), reqwest::Error> {
     let confirmation_link = format!(
         "{}/subscriptions/confirm?subscription_token={}",
-        base_url,
-        subscription_token
+        base_url, subscription_token
     );
     let plain_body = format!(
         "Welcome to our newsletter!\nVisit {} to confirm your subscription.",
         confirmation_link
     );
     let html_body = format!(
-        "Welcome to our newsletter!<br />\
-        Click <a href=\"{}\">here</a> to confirm your subscription.",
+        "Welcome to our newsletter!<br />Click <a href=\"{}\">here</a> to confirm your \
+         subscription.",
         confirmation_link
     );
     email_client
-    .send_email(
-        &new_subscriber.email,
-        "Welcome!",
-        &html_body,
-        &plain_body,
-    )
-    .await
+        .send_email(&new_subscriber.email, "Welcome!", &html_body, &plain_body)
+        .await
 }
 
 #[tracing::instrument(
@@ -142,7 +149,7 @@ pub async fn send_confirmation_email(
 )]
 pub async fn insert_subscriber(
     transaction: &mut Transaction<'_, Postgres>,
-    new_subscriber: &NewSubscriber
+    new_subscriber: &NewSubscriber,
 ) -> Result<Uuid, sqlx::Error> {
     let subscriber_id = Uuid::new_v4();
     sqlx::query!(
@@ -155,9 +162,7 @@ pub async fn insert_subscriber(
     )
     .execute(transaction.as_mut())
     .await
-    .map_err(|e| {
-        e
-    })?;
+    .map_err(|e| e)?;
     // Using the `?` operator to return early
     // if the function failed, returning a sqlx::Error
     Ok(subscriber_id)
@@ -180,9 +185,7 @@ pub async fn store_token(
     )
     .execute(transaction.as_mut()) // Use `transaction.as_mut()` to access the underlying connection
     .await
-    .map_err(|e| {
-        StoreTokenError(e)
-    })?;
+    .map_err(|e| StoreTokenError(e))?;
     Ok(())
 }
 
